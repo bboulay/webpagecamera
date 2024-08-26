@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Comparison App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        #result-page {
+            display: none;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Image Comparison App</h1>
+
+    <!-- Image Capture Section -->
+    <div id="capture-section">
+        <video id="video" width="320" height="240" autoplay></video>
+        <button id="capture-btn">Capture Image</button>
+        <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+        <p id="status"></p>
+    </div>
+
+    <!-- Result Page -->
+    <div id="result-page">
+        <h2>Match Found!</h2>
+        <p id="info"></p>
+        <button id="retry-btn">Try Again</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script>
+        // Constants
+        const THRESHOLD = 80; // Example threshold for similarity percentage
+
+        // Preload comparison images (you can replace these with your own images)
+        const imagesToCompare = [
+            { src: 'image1.jpg', info: 'This is image 1' },
+            { src: 'image2.jpg', info: 'This is image 2' },
+            { src: 'image3.jpg', info: 'This is image 3' }
+        ];
+
+        // Set up video stream
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing the camera: " + err);
+            });
+
+        // Capture image on button click
+        document.getElementById('capture-btn').addEventListener('click', async () => {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const capturedImage = canvas.toDataURL('image/png');
+
+            // Compare the captured image with the preloaded images
+            let matchFound = false;
+            for (let imgObj of imagesToCompare) {
+                let similarity = await compareImages(capturedImage, imgObj.src);
+                if (similarity > THRESHOLD) {
+                    displayResult(imgObj.info);
+                    matchFound = true;
+                    break;
+                }
+            }
+
+            if (!matchFound) {
+                document.getElementById('status').innerText = "No significant match found.";
+            }
+        });
+
+        // Dummy comparison function (replace with actual TensorFlow.js model or any other logic)
+        async function compareImages(capturedImage, comparisonImage) {
+            // Example: return a random similarity score
+            return Math.floor(Math.random() * 100);
+        }
+
+        // Display the result page
+        function displayResult(info) {
+            document.getElementById('capture-section').style.display = 'none';
+            document.getElementById('result-page').style.display = 'block';
+            document.getElementById('info').innerText = info;
+        }
+
+        // Retry button
+        document.getElementById('retry-btn').addEventListener('click', () => {
+            document.getElementById('capture-section').style.display = 'block';
+            document.getElementById('result-page').style.display = 'none';
+            document.getElementById('status').innerText = '';
+        });
+    </script>
+
+</body>
+</html>
